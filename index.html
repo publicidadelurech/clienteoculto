@@ -1,0 +1,1201 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Studio Lu Rech — Cliente Oculto</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#F7F4EF;
+  --surface:#FAF8F4;
+  --bege:#E8DED0;
+  --cinza:#8A8A8A;
+  --preto:#1C1C1C;
+  --gold:#C7A86A;
+  --gold-dark:#A8883A;
+  --erro:#D9534F;
+  --sucesso:#4CAF50;
+  --atencao:#F4B400;
+  --sidebar:#1C1C1C;
+  --radius:12px;
+  --shadow:0 2px 12px rgba(0,0,0,.08);
+  --transition:.2s ease;
+}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--preto);min-height:100vh;font-size:14px}
+
+/* LOGIN */
+#login-screen{display:flex;min-height:100vh}
+.login-left{width:420px;min-height:100vh;background:var(--sidebar);display:flex;flex-direction:column;justify-content:center;padding:60px 48px;flex-shrink:0}
+.login-logo{font-size:22px;font-weight:700;color:#fff;letter-spacing:-.5px;margin-bottom:8px}
+.login-logo span{color:var(--gold)}
+.login-tagline{color:var(--cinza);font-size:13px;margin-bottom:56px}
+.login-left h2{color:#fff;font-size:26px;font-weight:600;margin-bottom:8px}
+.login-left p{color:var(--cinza);font-size:13px;margin-bottom:32px}
+.form-group{margin-bottom:20px}
+.form-group label{display:block;color:#ccc;font-size:12px;font-weight:500;margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px}
+.form-group input{width:100%;background:#2a2a2a;border:1px solid #333;border-radius:8px;padding:12px 16px;color:#fff;font-size:14px;font-family:inherit;transition:border-color var(--transition)}
+.form-group input:focus{outline:none;border-color:var(--gold)}
+.btn-primary{width:100%;background:var(--gold);color:#fff;border:none;border-radius:8px;padding:14px;font-size:15px;font-weight:600;cursor:pointer;transition:background var(--transition);margin-top:8px}
+.btn-primary:hover{background:var(--gold-dark)}
+.login-error{color:#f88;font-size:13px;margin-top:12px;display:none}
+.login-right{flex:1;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:60px}
+.login-right-inner{max-width:400px;text-align:center}
+.login-right-inner h3{font-size:28px;font-weight:700;margin-bottom:16px;color:var(--preto)}
+.login-right-inner p{color:var(--cinza);line-height:1.7;font-size:15px}
+.login-stats{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:40px}
+.login-stat{background:var(--surface);border-radius:var(--radius);padding:20px;border:1px solid var(--bege)}
+.login-stat .val{font-size:28px;font-weight:700;color:var(--gold)}
+.login-stat .lbl{font-size:12px;color:var(--cinza);margin-top:4px}
+
+/* APP LAYOUT */
+#app{display:none;min-height:100vh;flex-direction:row}
+.sidebar{width:240px;background:var(--sidebar);min-height:100vh;display:flex;flex-direction:column;flex-shrink:0;position:fixed;top:0;left:0;bottom:0;overflow-y:auto}
+.sidebar-brand{padding:28px 24px 20px;border-bottom:1px solid #2a2a2a}
+.brand-name{font-size:16px;font-weight:700;color:#fff}
+.brand-name span{color:var(--gold)}
+.brand-sub{font-size:11px;color:var(--cinza);margin-top:2px}
+.nav-section{padding:16px 0 8px}
+.nav-item{display:flex;align-items:center;gap:12px;padding:10px 24px;color:#aaa;cursor:pointer;transition:all var(--transition);font-size:13px;font-weight:500}
+.nav-item:hover,.nav-item.active{color:#fff;background:rgba(255,255,255,.06)}
+.nav-item.active{border-left:3px solid var(--gold);padding-left:21px}
+.nav-icon{font-size:16px;width:20px;text-align:center}
+.sidebar-footer{margin-top:auto;padding:20px 24px;border-top:1px solid #2a2a2a}
+.user-chip{display:flex;align-items:center;gap:12px}
+.avatar{width:36px;height:36px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;font-size:13px;flex-shrink:0}
+.user-name{font-size:13px;font-weight:600;color:#fff}
+.user-role{font-size:11px;color:var(--cinza)}
+.btn-logout{margin-top:12px;width:100%;background:transparent;border:1px solid #333;border-radius:8px;padding:8px;color:#888;font-size:12px;cursor:pointer;transition:all var(--transition)}
+.btn-logout:hover{border-color:var(--erro);color:var(--erro)}
+
+.main{margin-left:240px;flex:1;padding:32px;min-height:100vh}
+.page{display:none}
+.page.active{display:block}
+.page-header{margin-bottom:28px}
+.page-title{font-size:24px;font-weight:700;color:var(--preto)}
+.page-sub{font-size:14px;color:var(--cinza);margin-top:4px}
+
+/* CARDS */
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:28px}
+.kpi-card{background:var(--surface);border-radius:var(--radius);padding:20px 24px;border:1px solid var(--bege);box-shadow:var(--shadow)}
+.kpi-label{font-size:12px;font-weight:500;color:var(--cinza);text-transform:uppercase;letter-spacing:.5px}
+.kpi-value{font-size:32px;font-weight:700;color:var(--preto);margin:6px 0 2px}
+.kpi-sub{font-size:12px;color:var(--cinza)}
+.kpi-badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600}
+.badge-excelente{background:#e8f5e9;color:#2e7d32}
+.badge-bom{background:#e3f2fd;color:#1565c0}
+.badge-atencao{background:#fff8e1;color:#f57f17}
+.badge-critico{background:#ffebee;color:#c62828}
+.badge-promotor{background:#e8f5e9;color:#2e7d32}
+.badge-neutro{background:#fff8e1;color:#f57f17}
+.badge-detrator{background:#ffebee;color:#c62828}
+
+.chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:28px}
+.chart-card{background:var(--surface);border-radius:var(--radius);padding:24px;border:1px solid var(--bege);box-shadow:var(--shadow)}
+.chart-card.full{grid-column:1/-1}
+.chart-title{font-size:15px;font-weight:600;margin-bottom:16px;color:var(--preto)}
+.chart-wrap{position:relative;height:240px}
+
+/* TABLE */
+.table-card{background:var(--surface);border-radius:var(--radius);border:1px solid var(--bege);overflow:hidden;box-shadow:var(--shadow);margin-bottom:28px}
+.table-header{padding:16px 20px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--bege)}
+.table-title{font-size:15px;font-weight:600}
+table{width:100%;border-collapse:collapse}
+th{padding:12px 16px;text-align:left;font-size:11px;font-weight:600;color:var(--cinza);text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--bege);background:#f9f7f4}
+td{padding:13px 16px;border-bottom:1px solid #f0ede8;font-size:13px;vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:#f5f2ee}
+
+/* STATUS */
+.status{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:600}
+.status::before{content:'';width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.status-excelente{background:#e8f5e9;color:#2e7d32}.status-excelente::before{background:#2e7d32}
+.status-bom{background:#e3f2fd;color:#1565c0}.status-bom::before{background:#1565c0}
+.status-atencao{background:#fff8e1;color:#f57f17}.status-atencao::before{background:#f57f17}
+.status-critico{background:#ffebee;color:#c62828}.status-critico::before{background:#c62828}
+
+/* RANKING */
+.ranking-list{display:flex;flex-direction:column;gap:10px}
+.rank-item{background:var(--surface);border-radius:var(--radius);padding:16px 20px;border:1px solid var(--bege);display:flex;align-items:center;gap:16px}
+.rank-pos{font-size:22px;font-weight:800;color:var(--bege);width:32px;flex-shrink:0;text-align:center}
+.rank-pos.p1{color:#FFD700}.rank-pos.p2{color:#C0C0C0}.rank-pos.p3{color:#CD7F32}
+.rank-name{flex:1;font-weight:600;font-size:15px}
+.rank-score{font-size:20px;font-weight:700;color:var(--gold)}
+.rank-bar-wrap{flex:2;background:var(--bege);border-radius:4px;height:6px;overflow:hidden}
+.rank-bar{height:100%;background:var(--gold);border-radius:4px;transition:width .5s ease}
+
+/* ALERTS */
+.alerts-list{display:flex;flex-direction:column;gap:10px;margin-bottom:28px}
+.alert-item{background:var(--surface);border-radius:var(--radius);padding:14px 18px;border-left:4px solid var(--cinza);display:flex;align-items:flex-start;gap:12px}
+.alert-item.critico{border-color:var(--erro)}.alert-item.atencao{border-color:var(--atencao)}.alert-item.info{border-color:#1565c0}
+.alert-icon{font-size:18px;flex-shrink:0;margin-top:1px}
+.alert-text{font-size:13px;line-height:1.5}.alert-text strong{display:block;margin-bottom:2px}
+
+/* FORM */
+.form-card{background:var(--surface);border-radius:var(--radius);padding:28px;border:1px solid var(--bege);box-shadow:var(--shadow);margin-bottom:20px}
+.form-card-title{font-size:16px;font-weight:700;margin-bottom:20px;color:var(--preto);display:flex;align-items:center;gap:10px}
+.badge-weight{background:var(--gold);color:#fff;font-size:11px;padding:2px 8px;border-radius:12px;font-weight:600}
+.criteria-item{margin-bottom:24px;padding-bottom:24px;border-bottom:1px solid var(--bege)}
+.criteria-item:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0}
+.criteria-name{font-size:14px;font-weight:600;margin-bottom:10px;color:var(--preto)}
+.scale-buttons{display:flex;gap:6px;flex-wrap:wrap}
+.scale-btn{width:40px;height:40px;border-radius:8px;border:2px solid var(--bege);background:#fff;cursor:pointer;font-size:14px;font-weight:600;color:var(--cinza);transition:all var(--transition);flex-shrink:0}
+.scale-btn:hover{border-color:var(--gold);color:var(--gold)}
+.scale-btn.selected{background:var(--gold);border-color:var(--gold);color:#fff}
+.scale-labels{display:flex;justify-content:space-between;margin-top:6px;font-size:11px;color:var(--cinza)}
+
+.nps-section{margin-bottom:24px}
+.nps-label{font-size:14px;font-weight:600;margin-bottom:8px}
+.nps-sub{font-size:12px;color:var(--cinza);margin-bottom:12px}
+.nps-buttons{display:flex;gap:5px}
+.nps-btn{flex:1;height:40px;border-radius:8px;border:2px solid var(--bege);background:#fff;cursor:pointer;font-size:13px;font-weight:600;color:var(--cinza);transition:all var(--transition)}
+.nps-btn:hover{border-color:var(--gold)}
+.nps-btn.selected{color:#fff}
+.nps-btn.detrator.selected{background:#D9534F;border-color:#D9534F}
+.nps-btn.neutro.selected{background:#F4B400;border-color:#F4B400}
+.nps-btn.promotor.selected{background:#4CAF50;border-color:#4CAF50}
+
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+.form-field{margin-bottom:16px}
+.form-field label{display:block;font-size:12px;font-weight:600;color:var(--cinza);text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px}
+.form-field input,.form-field select,.form-field textarea{width:100%;background:#fff;border:1px solid var(--bege);border-radius:8px;padding:10px 14px;font-size:14px;font-family:inherit;color:var(--preto);transition:border-color var(--transition)}
+.form-field input:focus,.form-field select:focus,.form-field textarea:focus{outline:none;border-color:var(--gold)}
+.form-field textarea{min-height:90px;resize:vertical}
+
+.upload-zone{border:2px dashed var(--bege);border-radius:var(--radius);padding:28px;text-align:center;cursor:pointer;transition:border-color var(--transition);background:#fff}
+.upload-zone:hover{border-color:var(--gold)}
+.upload-zone p{color:var(--cinza);font-size:13px;margin-top:8px}
+.upload-zone strong{font-size:15px;color:var(--preto)}
+.upload-previews{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}
+.upload-file{display:flex;align-items:center;gap:8px;padding:8px 12px;background:#f5f2ee;border-radius:8px;font-size:12px;color:var(--preto)}
+.file-remove{cursor:pointer;color:var(--erro);margin-left:auto;font-size:16px;line-height:1}
+
+.submit-bar{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;background:var(--surface);border:1px solid var(--bege);border-radius:var(--radius);padding:20px 24px;margin-top:8px}
+.score-preview{font-size:13px;color:var(--cinza)}
+.score-preview strong{font-size:20px;font-weight:700;color:var(--gold);margin-left:8px}
+.btn-secondary{background:transparent;border:1px solid var(--bege);border-radius:8px;padding:10px 20px;font-size:14px;font-weight:500;cursor:pointer;color:var(--cinza);transition:all var(--transition)}
+.btn-secondary:hover{border-color:var(--gold);color:var(--gold)}
+.btn-gold{background:var(--gold);color:#fff;border:none;border-radius:8px;padding:10px 24px;font-size:14px;font-weight:600;cursor:pointer;transition:background var(--transition)}
+.btn-gold:hover{background:var(--gold-dark)}
+
+/* INSIGHTS */
+.insights-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:28px}
+.insight-card{background:var(--surface);border-radius:var(--radius);padding:18px;border:1px solid var(--bege);box-shadow:var(--shadow)}
+.insight-icon{font-size:22px;margin-bottom:8px}
+.insight-text{font-size:13px;line-height:1.6;color:var(--preto)}
+
+/* CONFIG */
+.config-section{background:var(--surface);border-radius:var(--radius);padding:24px;border:1px solid var(--bege);margin-bottom:20px}
+.config-section h3{font-size:15px;font-weight:700;margin-bottom:16px;color:var(--preto)}
+.config-row{display:flex;align-items:center;gap:16px;margin-bottom:14px;flex-wrap:wrap}
+.config-row label{flex:1;font-size:14px;min-width:200px}
+.config-row input[type=range]{flex:2;accent-color:var(--gold)}
+.config-row .val{width:50px;text-align:right;font-weight:600;color:var(--gold)}
+
+/* QUARTERLY */
+.quarterly-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:28px}
+.quarter-card{background:var(--surface);border-radius:var(--radius);padding:18px;border:1px solid var(--bege);text-align:center}
+.quarter-name{font-size:13px;font-weight:700;margin-bottom:6px;color:var(--preto)}
+.quarter-count{font-size:24px;font-weight:700;color:var(--gold);margin-bottom:8px}
+
+/* LGPD */
+.lgpd-box{background:#fff8e1;border:1px solid #ffe082;border-radius:var(--radius);padding:16px;margin-bottom:16px;font-size:13px;line-height:1.6;color:#5d4037}
+.lgpd-check{display:flex;align-items:flex-start;gap:10px;margin-top:10px}
+.lgpd-check input{margin-top:3px;accent-color:var(--gold)}
+
+/* CO PORTAL */
+.co-welcome{background:var(--surface);border-radius:var(--radius);padding:32px;border:1px solid var(--bege);margin-bottom:20px;text-align:center}
+.co-welcome h2{font-size:22px;font-weight:700;margin-bottom:8px}
+.co-welcome p{color:var(--cinza);font-size:14px;max-width:480px;margin:0 auto}
+.co-visits{display:flex;flex-direction:column;gap:10px}
+.co-visit-card{background:var(--surface);border-radius:var(--radius);padding:16px 20px;border:1px solid var(--bege);display:flex;align-items:center;gap:16px;justify-content:space-between}
+
+/* NPS GAUGE */
+.nps-gauge{text-align:center;padding:20px 0}
+.nps-number{font-size:52px;font-weight:800}
+.nps-zone{display:flex;border-radius:8px;overflow:hidden;height:8px;margin-top:16px}
+.nps-zone-d{background:#D9534F}.nps-zone-n{background:#F4B400}.nps-zone-p{background:#4CAF50}
+
+/* MODAL */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;align-items:center;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal{background:var(--surface);border-radius:var(--radius);padding:32px;max-width:560px;width:90%;max-height:80vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+.modal h3{font-size:18px;font-weight:700;margin-bottom:16px}
+.modal-footer{display:flex;gap:12px;justify-content:flex-end;margin-top:24px}
+
+/* MISC */
+.tag{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;background:var(--bege);color:var(--cinza)}
+
+@media(max-width:900px){
+  .login-right{display:none}
+  .login-left{width:100%}
+  .chart-grid,.insights-grid{grid-template-columns:1fr}
+  .form-row{grid-template-columns:1fr}
+  .quarterly-grid{grid-template-columns:1fr 1fr}
+}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-left">
+    <div class="login-logo">Studio <span>Lu Rech</span></div>
+    <div class="login-tagline">Sistema de Cliente Oculto</div>
+    <h2>Bem-vinda de volta</h2>
+    <p>Acesse sua conta para continuar</p>
+    <div class="form-group">
+      <label>E-mail</label>
+      <input type="email" id="login-email" placeholder="seu@email.com" value="master@studiolurech.com.br">
+    </div>
+    <div class="form-group">
+      <label>Senha</label>
+      <input type="password" id="login-pass" placeholder="••••••••" value="master123">
+    </div>
+    <button class="btn-primary" onclick="handleLogin()">Entrar</button>
+    <div class="login-error" id="login-error">E-mail ou senha incorretos.</div>
+  </div>
+  <div class="login-right">
+    <div class="login-right-inner">
+      <h3>Avaliações que transformam experiências</h3>
+      <p>Monitore a qualidade dos seus salões com avaliações detalhadas de clientes ocultos, análise NPS e insights automáticos.</p>
+      <div class="login-stats">
+        <div class="login-stat"><div class="val">5</div><div class="lbl">Unidades monitoradas</div></div>
+        <div class="login-stat"><div class="val">0–10</div><div class="lbl">Escala de avaliação</div></div>
+        <div class="login-stat"><div class="val">NPS</div><div class="lbl">Net Promoter Score</div></div>
+        <div class="login-stat"><div class="val">4×</div><div class="lbl">Avaliações por ano</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <div class="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-name">Studio <span>Lu Rech</span></div>
+      <div class="brand-sub">Cliente Oculto</div>
+    </div>
+    <nav id="sidebar-nav"></nav>
+    <div class="sidebar-footer">
+      <div class="user-chip">
+        <div class="avatar" id="user-avatar">LR</div>
+        <div>
+          <div class="user-name" id="user-name-display">Lu Rech</div>
+          <div class="user-role" id="user-role-display">Master</div>
+        </div>
+      </div>
+      <button class="btn-logout" onclick="handleLogout()">Sair da conta</button>
+    </div>
+  </div>
+
+  <div class="main">
+    <!-- DASHBOARD -->
+    <div class="page" id="page-dashboard">
+      <div class="page-header">
+        <div class="page-title">Dashboard</div>
+        <div class="page-sub" id="dash-period">Visão geral</div>
+      </div>
+      <div class="kpi-grid" id="dash-kpis"></div>
+      <div class="alerts-list" id="dash-alerts"></div>
+      <div class="chart-grid">
+        <div class="chart-card"><div class="chart-title">Média por Unidade</div><div class="chart-wrap"><canvas id="chart-units"></canvas></div></div>
+        <div class="chart-card"><div class="chart-title">NPS por Unidade</div><div class="chart-wrap"><canvas id="chart-nps"></canvas></div></div>
+        <div class="chart-card full"><div class="chart-title">Evolução Mensal (Média Geral)</div><div class="chart-wrap"><canvas id="chart-trend"></canvas></div></div>
+      </div>
+      <div class="insights-grid" id="dash-insights"></div>
+      <div class="table-card">
+        <div class="table-header"><span class="table-title">Últimas Visitas</span></div>
+        <table><thead><tr><th>Unidade</th><th>Data</th><th>Avaliador</th><th>Nota</th><th>NPS</th><th>Status</th></tr></thead>
+        <tbody id="dash-visits-table"></tbody></table>
+      </div>
+    </div>
+
+    <!-- EXPERIÊNCIA DO CLIENTE -->
+    <div class="page" id="page-experiencia">
+      <div class="page-header">
+        <div class="page-title">Experiência do Cliente</div>
+        <div class="page-sub">NPS, satisfação e percepção por critério</div>
+      </div>
+      <div class="kpi-grid" id="exp-kpis"></div>
+      <div class="chart-grid">
+        <div class="chart-card"><div class="chart-title">NPS Global</div><div id="nps-gauge-wrap"></div></div>
+        <div class="chart-card"><div class="chart-title">Promotores × Neutros × Detratores</div><div class="chart-wrap"><canvas id="chart-nps-dist"></canvas></div></div>
+        <div class="chart-card full"><div class="chart-title">Radar de Critérios (média geral)</div><div class="chart-wrap"><canvas id="chart-radar"></canvas></div></div>
+      </div>
+    </div>
+
+    <!-- RANKING -->
+    <div class="page" id="page-ranking">
+      <div class="page-header">
+        <div class="page-title">Ranking de Unidades</div>
+        <div class="page-sub">Ordenado por nota média ponderada</div>
+      </div>
+      <div class="ranking-list" id="ranking-list"></div>
+    </div>
+
+    <!-- NOVA AVALIAÇÃO -->
+    <div class="page" id="page-nova">
+      <div class="page-header">
+        <div class="page-title">Nova Avaliação</div>
+        <div class="page-sub">Registre uma visita de cliente oculto</div>
+      </div>
+      <div id="nova-form-wrap"></div>
+    </div>
+
+    <!-- MINHAS VISITAS -->
+    <div class="page" id="page-minhas">
+      <div class="page-header">
+        <div class="page-title">Minhas Visitas</div>
+        <div class="page-sub">Histórico das suas avaliações</div>
+      </div>
+      <div id="co-portal-wrap"></div>
+    </div>
+
+    <!-- TRIMESTRAL -->
+    <div class="page" id="page-trimestral">
+      <div class="page-header">
+        <div class="page-title">Programação Trimestral</div>
+        <div class="page-sub">Avaliações planejadas para Jan / Abr / Jul / Out</div>
+      </div>
+      <div class="quarterly-grid" id="quarterly-grid"></div>
+      <div class="table-card">
+        <div class="table-header"><span class="table-title">Calendário de Visitas</span></div>
+        <table><thead><tr><th>Trimestre</th><th>Período</th><th>Unidade</th><th>Status</th><th>Nota</th></tr></thead>
+        <tbody id="quarterly-table"></tbody></table>
+      </div>
+    </div>
+
+    <!-- RELATÓRIOS -->
+    <div class="page" id="page-relatorios">
+      <div class="page-header">
+        <div class="page-title">Relatórios</div>
+        <div class="page-sub">Visitas detalhadas por unidade</div>
+      </div>
+      <div class="form-card" style="margin-bottom:20px">
+        <div class="form-row">
+          <div class="form-field"><label>Unidade</label>
+            <select id="rel-unit"><option value="">Todas</option></select></div>
+          <div class="form-field"><label>Trimestre</label>
+            <select id="rel-period">
+              <option value="">Todo período</option>
+              <option value="Q1">Q1 — Jan/Mar</option>
+              <option value="Q2">Q2 — Abr/Jun</option>
+              <option value="Q3">Q3 — Jul/Set</option>
+              <option value="Q4">Q4 — Out/Dez</option>
+            </select></div>
+        </div>
+        <button class="btn-gold" onclick="renderRelatorios()">Filtrar</button>
+      </div>
+      <div class="table-card">
+        <table><thead><tr><th>Data</th><th>Unidade</th><th>Avaliador</th><th>Recepção</th><th>Ambiente</th><th>Profissional</th><th>Serviço</th><th>Experiência</th><th>Nota Final</th><th>NPS</th></tr></thead>
+        <tbody id="rel-table"></tbody></table>
+      </div>
+    </div>
+
+    <!-- CONFIGURAÇÕES -->
+    <div class="page" id="page-config">
+      <div class="page-header">
+        <div class="page-title">Configurações</div>
+        <div class="page-sub">Pesos e parâmetros do sistema</div>
+      </div>
+      <div class="config-section">
+        <h3>Ponderação de Integração</h3>
+        <p style="font-size:13px;color:var(--cinza);margin-bottom:16px">Proporção entre auditoria interna e cliente oculto no cálculo da nota consolidada.</p>
+        <div class="config-row">
+          <label>Auditoria Interna</label>
+          <input type="range" id="cfg-internal" min="0" max="100" value="80" oninput="syncWeights('internal')">
+          <span class="val" id="cfg-internal-val">80%</span>
+        </div>
+        <div class="config-row">
+          <label>Cliente Oculto</label>
+          <input type="range" id="cfg-oculto" min="0" max="100" value="20" oninput="syncWeights('oculto')">
+          <span class="val" id="cfg-oculto-val">20%</span>
+        </div>
+        <button class="btn-gold" style="margin-top:8px" onclick="saveConfig()">Salvar configuração</button>
+      </div>
+      <div class="config-section">
+        <h3>Pesos dos Critérios</h3>
+        <table style="width:100%;border-collapse:collapse">
+          <thead><tr>
+            <th style="text-align:left;padding:8px 0;font-size:11px;color:var(--cinza);text-transform:uppercase;border-bottom:1px solid var(--bege)">Critério</th>
+            <th style="text-align:right;padding:8px 0;font-size:11px;color:var(--cinza);text-transform:uppercase;border-bottom:1px solid var(--bege)">Peso</th>
+          </tr></thead>
+          <tbody id="cfg-criteria-table"></tbody>
+        </table>
+      </div>
+      <div class="config-section">
+        <h3>Usuários do Sistema</h3>
+        <table style="width:100%;border-collapse:collapse">
+          <thead><tr>
+            <th style="text-align:left;padding:10px 12px;font-size:11px;color:var(--cinza);text-transform:uppercase;border-bottom:1px solid var(--bege)">Nome</th>
+            <th style="text-align:left;padding:10px 12px;font-size:11px;color:var(--cinza);text-transform:uppercase;border-bottom:1px solid var(--bege)">E-mail</th>
+            <th style="text-align:left;padding:10px 12px;font-size:11px;color:var(--cinza);text-transform:uppercase;border-bottom:1px solid var(--bege)">Perfil</th>
+          </tr></thead>
+          <tbody id="cfg-users-table"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modal-visit">
+  <div class="modal">
+    <h3 id="modal-visit-title">Detalhes da Visita</h3>
+    <div id="modal-visit-body"></div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeModal()">Fechar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════ DATA ═══════════════════════
+const USERS = [
+  {id:1,name:'Lu Rech',email:'master@studiolurech.com.br',password:'master123',role:'master',initials:'LR'},
+  {id:2,name:'Ana Gestão',email:'gestao@studiolurech.com.br',password:'gestao123',role:'gestao',initials:'AG'},
+  {id:3,name:'Maria Silva',email:'view@studiolurech.com.br',password:'view123',role:'view',initials:'MS'},
+  {id:4,name:'Cliente Oculto',email:'oculto@studiolurech.com.br',password:'oculto123',role:'cliente_oculto',initials:'CO'},
+];
+
+const UNITS = [
+  {id:'barra',name:'Barra Prime'},
+  {id:'leblon',name:'Leblon'},
+  {id:'bluecenter',name:'Blue Center'},
+  {id:'copacabana',name:'Copacabana'},
+  {id:'moema',name:'Moema'},
+];
+
+const CRITERIA = [
+  {id:'recepcao',name:'Atendimento da Recepção',weight:10,items:[
+    {id:'rec_cord',name:'Cordialidade'},
+    {id:'rec_simp',name:'Simpatia'},
+    {id:'rec_apres',name:'Apresentação Pessoal'},
+    {id:'rec_agil',name:'Agilidade'},
+  ]},
+  {id:'ambiente',name:'Ambiente',weight:9,items:[
+    {id:'amb_limp',name:'Limpeza'},
+    {id:'amb_org',name:'Organização'},
+    {id:'amb_aroma',name:'Aroma'},
+    {id:'amb_conf',name:'Conforto'},
+  ]},
+  {id:'profissional',name:'Profissional Responsável',weight:10,items:[
+    {id:'pro_apres',name:'Apresentação'},
+    {id:'pro_cord',name:'Cordialidade'},
+    {id:'pro_conh',name:'Conhecimento'},
+    {id:'pro_exp',name:'Experiência Percebida'},
+  ]},
+  {id:'servico',name:'Serviço Executado',weight:10,items:[
+    {id:'srv_qual',name:'Qualidade Percebida'},
+    {id:'srv_aten',name:'Atenção aos Detalhes'},
+    {id:'srv_res',name:'Resultado Final'},
+  ]},
+  {id:'experiencia',name:'Experiência Geral',weight:10,items:[
+    {id:'exp_sat',name:'Satisfação Geral'},
+    {id:'exp_rec',name:'Recomendação'},
+    {id:'exp_ret',name:'Retorno Futuro'},
+  ]},
+];
+
+const ROLE_LABELS = {master:'Master',gestao:'Gestão',view:'Visualização',cliente_oculto:'Cliente Oculto'};
+
+const NAV_CONFIG = {
+  master:[
+    {id:'dashboard',icon:'📊',label:'Dashboard'},
+    {id:'experiencia',icon:'⭐',label:'Experiência do Cliente'},
+    {id:'ranking',icon:'🏆',label:'Ranking'},
+    {id:'nova',icon:'➕',label:'Nova Avaliação'},
+    {id:'trimestral',icon:'📅',label:'Trimestral'},
+    {id:'relatorios',icon:'📋',label:'Relatórios'},
+    {id:'config',icon:'⚙️',label:'Configurações'},
+  ],
+  gestao:[
+    {id:'dashboard',icon:'📊',label:'Dashboard'},
+    {id:'experiencia',icon:'⭐',label:'Experiência do Cliente'},
+    {id:'ranking',icon:'🏆',label:'Ranking'},
+    {id:'nova',icon:'➕',label:'Nova Avaliação'},
+    {id:'trimestral',icon:'📅',label:'Trimestral'},
+    {id:'relatorios',icon:'📋',label:'Relatórios'},
+  ],
+  view:[
+    {id:'dashboard',icon:'📊',label:'Dashboard'},
+    {id:'experiencia',icon:'⭐',label:'Experiência do Cliente'},
+    {id:'ranking',icon:'🏆',label:'Ranking'},
+    {id:'relatorios',icon:'📋',label:'Relatórios'},
+  ],
+  cliente_oculto:[
+    {id:'minhas',icon:'📝',label:'Minhas Visitas'},
+    {id:'nova',icon:'➕',label:'Nova Avaliação'},
+  ],
+};
+
+// ═══════════════════════ STATE ═══════════════════════
+let currentUser = null;
+let chartInstances = {};
+let uploadedFiles = [];
+let appConfig = {internalWeight:80,ocultoWeight:20};
+
+// ═══════════════════════ VISITS ═══════════════════════
+function getVisits(){
+  const raw = localStorage.getItem('slr_visits_v2');
+  return raw ? JSON.parse(raw) : seedDemoData();
+}
+function saveVisits(v){ localStorage.setItem('slr_visits_v2', JSON.stringify(v)); }
+
+function seedDemoData(){
+  const visits = [];
+  let nextId = 1;
+  const evaluators = ['Ana Oliveira','Bruno Costa','Carla Menezes','Daniela Pires','Eduardo Lima'];
+  const dates = [
+    ['2026-01-14','2026-01-22'],
+    ['2026-04-08','2026-04-19'],
+    ['2025-07-11','2025-07-23'],
+    ['2025-10-05','2025-10-17'],
+    ['2025-01-09','2025-01-21'],
+  ];
+  const baseScores = {barra:8.4,leblon:7.9,bluecenter:8.8,copacabana:7.2,moema:9.1};
+
+  UNITS.forEach((u,ui)=>{
+    dates.forEach((pair,di)=>{
+      const base = baseScores[u.id];
+      pair.forEach((date,pi)=>{
+        const jitter = (Math.random()-.5)*1.2;
+        const answers = {};
+        CRITERIA.forEach(c=>{
+          c.items.forEach(it=>{
+            answers[it.id] = Math.min(10,Math.max(0,Math.round(base+jitter+(Math.random()-.5)*1.5)));
+          });
+        });
+        const score = calcWeightedScore(answers);
+        const npsRaw = Math.round(base + jitter + (Math.random()-.5));
+        visits.push({
+          id: nextId++,
+          unitId: u.id,
+          date,
+          evaluator: evaluators[(ui*2+di+pi)%5],
+          evaluatorId: 4,
+          answers,
+          nps: Math.min(10,Math.max(0,npsRaw)),
+          score,
+          obs: 'Visita realizada conforme protocolo estabelecido.',
+          quarter: getQuarter(date),
+          files: [],
+        });
+      });
+    });
+  });
+  saveVisits(visits);
+  return visits;
+}
+
+// ═══════════════════════ SCORING ═══════════════════════
+function calcWeightedScore(answers){
+  let tw=0,ts=0;
+  CRITERIA.forEach(c=>{
+    const sc = c.items.map(i=>answers[i.id]).filter(v=>v!=null);
+    if(sc.length){ ts += (sc.reduce((a,b)=>a+b,0)/sc.length)*c.weight; tw += c.weight; }
+  });
+  return tw>0 ? Math.round((ts/tw)*10)/10 : 0;
+}
+
+function criterionAvg(answers,c){
+  const sc = c.items.map(i=>answers[i.id]).filter(v=>v!=null);
+  return sc.length ? Math.round((sc.reduce((a,b)=>a+b,0)/sc.length)*10)/10 : null;
+}
+
+function getStatus(s){ return s>=9?'excelente':s>=7?'bom':s>=5?'atencao':'critico'; }
+function statusLabel(s){ return{excelente:'Excelente',bom:'Bom',atencao:'Atenção',critico:'Crítico'}[s]||s; }
+function npsClass(n){ return n>=9?'promotor':n>=7?'neutro':'detrator'; }
+function npsLabel(n){ return{promotor:'Promotor',neutro:'Neutro',detrator:'Detrator'}[n]||n; }
+
+function calcNPS(visits){
+  if(!visits.length)return 0;
+  const p=visits.filter(v=>v.nps>=9).length;
+  const d=visits.filter(v=>v.nps<=6).length;
+  return Math.round(((p-d)/visits.length)*100);
+}
+
+function getQuarter(dateStr){
+  const m = new Date(dateStr+'T12:00:00').getMonth()+1;
+  return m<=3?'Q1':m<=6?'Q2':m<=9?'Q3':'Q4';
+}
+
+// ═══════════════════════ AUTH ═══════════════════════
+function handleLogin(){
+  const em = document.getElementById('login-email').value.trim();
+  const pw = document.getElementById('login-pass').value;
+  const user = USERS.find(u=>u.email===em && u.password===pw);
+  if(!user){ document.getElementById('login-error').style.display='block'; return; }
+  currentUser = user;
+  document.getElementById('login-screen').style.display='none';
+  document.getElementById('app').style.display='flex';
+  initApp();
+}
+
+document.getElementById('login-pass').addEventListener('keydown',e=>{ if(e.key==='Enter') handleLogin(); });
+
+function handleLogout(){
+  currentUser = null;
+  destroyCharts();
+  document.getElementById('app').style.display='none';
+  document.getElementById('login-screen').style.display='flex';
+}
+
+// ═══════════════════════ INIT ═══════════════════════
+function initApp(){
+  document.getElementById('user-avatar').textContent = currentUser.initials;
+  document.getElementById('user-name-display').textContent = currentUser.name;
+  document.getElementById('user-role-display').textContent = ROLE_LABELS[currentUser.role]||currentUser.role;
+  buildNav();
+  navigateTo(NAV_CONFIG[currentUser.role][0].id);
+}
+
+function buildNav(){
+  const nav = document.getElementById('sidebar-nav');
+  nav.innerHTML = '';
+  NAV_CONFIG[currentUser.role].forEach(item=>{
+    const div = document.createElement('div');
+    div.className = 'nav-item';
+    div.dataset.page = item.id;
+    div.innerHTML = `<span class="nav-icon">${item.icon}</span><span>${item.label}</span>`;
+    div.onclick = ()=>navigateTo(item.id);
+    nav.appendChild(div);
+  });
+}
+
+function navigateTo(pageId){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  const pg = document.getElementById('page-'+pageId);
+  if(pg) pg.classList.add('active');
+  const ni = document.querySelector(`.nav-item[data-page="${pageId}"]`);
+  if(ni) ni.classList.add('active');
+  switch(pageId){
+    case 'dashboard':   renderDashboard(); break;
+    case 'experiencia': renderExperiencia(); break;
+    case 'ranking':     renderRanking(); break;
+    case 'nova':        renderNovaForm(); break;
+    case 'minhas':      renderMinhasVisitas(); break;
+    case 'trimestral':  renderTrimestral(); break;
+    case 'relatorios':  renderRelatorios(); break;
+    case 'config':      renderConfig(); break;
+  }
+}
+
+// ═══════════════════════ CHARTS ═══════════════════════
+function destroyCharts(){
+  Object.values(chartInstances).forEach(c=>{ try{ c.destroy(); }catch(e){} });
+  chartInstances = {};
+}
+function makeChart(id,type,data,options={}){
+  if(chartInstances[id]) chartInstances[id].destroy();
+  const ctx = document.getElementById(id);
+  if(!ctx) return;
+  chartInstances[id] = new Chart(ctx,{type,data,options:{responsive:true,maintainAspectRatio:false,...options}});
+}
+
+// ═══════════════════════ DASHBOARD ═══════════════════════
+function renderDashboard(){
+  const visits = getVisits();
+  document.getElementById('dash-period').textContent = visits.length+' avaliações registradas';
+
+  const avg = visits.length ? Math.round((visits.reduce((a,v)=>a+v.score,0)/visits.length)*10)/10 : 0;
+  const nps = calcNPS(visits);
+  const prom = visits.filter(v=>v.nps>=9).length;
+  const best = getBestUnit(visits);
+
+  document.getElementById('dash-kpis').innerHTML = `
+    <div class="kpi-card"><div class="kpi-label">Nota Média Geral</div><div class="kpi-value">${avg}</div>
+      <div class="kpi-sub"><span class="kpi-badge badge-${getStatus(avg)}">${statusLabel(getStatus(avg))}</span></div></div>
+    <div class="kpi-card"><div class="kpi-label">NPS Geral</div>
+      <div class="kpi-value" style="color:${nps>=50?'#4CAF50':nps>=0?'#F4B400':'#D9534F'}">${nps}</div>
+      <div class="kpi-sub">Net Promoter Score</div></div>
+    <div class="kpi-card"><div class="kpi-label">Total de Visitas</div><div class="kpi-value">${visits.length}</div>
+      <div class="kpi-sub">Todas as unidades</div></div>
+    <div class="kpi-card"><div class="kpi-label">Melhor Unidade</div>
+      <div class="kpi-value" style="font-size:18px;margin-top:10px">${best.name}</div>
+      <div class="kpi-sub">Nota ${best.avg}</div></div>
+    <div class="kpi-card"><div class="kpi-label">Promotores</div>
+      <div class="kpi-value" style="color:#4CAF50">${prom}</div>
+      <div class="kpi-sub">${visits.length?Math.round(prom/visits.length*100):0}% das visitas</div></div>`;
+
+  buildAlerts(visits);
+
+  const unitAvgs = UNITS.map(u=>{
+    const uv = visits.filter(v=>v.unitId===u.id);
+    return {name:u.name, avg:uv.length?Math.round((uv.reduce((a,v)=>a+v.score,0)/uv.length)*10)/10:0};
+  });
+  makeChart('chart-units','bar',{
+    labels:unitAvgs.map(u=>u.name),
+    datasets:[{label:'Nota',data:unitAvgs.map(u=>u.avg),backgroundColor:'#C7A86A55',borderColor:'#C7A86A',borderWidth:2,borderRadius:6}]
+  },{scales:{y:{min:0,max:10,grid:{color:'#f0ede8'}},x:{grid:{display:false}}},plugins:{legend:{display:false}}});
+
+  const unitNPS = UNITS.map(u=>calcNPS(visits.filter(v=>v.unitId===u.id)));
+  makeChart('chart-nps','bar',{
+    labels:UNITS.map(u=>u.name),
+    datasets:[{label:'NPS',data:unitNPS,
+      backgroundColor:unitNPS.map(n=>n>=50?'#4CAF5055':n>=0?'#F4B40055':'#D9534F55'),
+      borderColor:unitNPS.map(n=>n>=50?'#4CAF50':n>=0?'#F4B400':'#D9534F'),
+      borderWidth:2,borderRadius:6}]
+  },{scales:{y:{grid:{color:'#f0ede8'}},x:{grid:{display:false}}},plugins:{legend:{display:false}}});
+
+  const months = {};
+  visits.forEach(v=>{ const m=v.date.slice(0,7); if(!months[m])months[m]=[]; months[m].push(v.score); });
+  const mkeys = Object.keys(months).sort();
+  makeChart('chart-trend','line',{
+    labels:mkeys,
+    datasets:[{label:'Média',data:mkeys.map(m=>Math.round((months[m].reduce((a,b)=>a+b,0)/months[m].length)*10)/10),
+      borderColor:'#C7A86A',backgroundColor:'rgba(199,168,106,.1)',tension:.35,fill:true,pointBackgroundColor:'#C7A86A',pointRadius:4}]
+  },{scales:{y:{min:0,max:10,grid:{color:'#f0ede8'}},x:{grid:{display:false}}},plugins:{legend:{display:false}}});
+
+  buildInsights(visits);
+
+  const last = [...visits].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,10);
+  document.getElementById('dash-visits-table').innerHTML = last.map(v=>`
+    <tr style="cursor:pointer" onclick="openVisitModal(${v.id})">
+      <td><strong>${unitName(v.unitId)}</strong></td>
+      <td>${formatDate(v.date)}</td>
+      <td>${v.evaluator}</td>
+      <td><strong>${v.score}</strong></td>
+      <td><span class="kpi-badge badge-${npsClass(v.nps)}">${v.nps} · ${npsLabel(npsClass(v.nps))}</span></td>
+      <td><span class="status status-${getStatus(v.score)}">${statusLabel(getStatus(v.score))}</span></td>
+    </tr>`).join('');
+}
+
+function getBestUnit(visits){
+  let best={name:'—',avg:0};
+  UNITS.forEach(u=>{
+    const uv=visits.filter(v=>v.unitId===u.id);
+    if(uv.length){ const avg=Math.round((uv.reduce((a,v)=>a+v.score,0)/uv.length)*10)/10; if(avg>best.avg)best={name:u.name,avg}; }
+  });
+  return best;
+}
+
+function buildAlerts(visits){
+  const list = [];
+  const now = new Date();
+  UNITS.forEach(u=>{
+    const uv = visits.filter(v=>v.unitId===u.id);
+    if(!uv.length) return;
+    const avg = Math.round((uv.reduce((a,v)=>a+v.score,0)/uv.length)*10)/10;
+    const nps = calcNPS(uv);
+    const lastDate = new Date([...uv].sort((a,b)=>b.date.localeCompare(a.date))[0].date+'T12:00:00');
+    const days = Math.floor((now-lastDate)/(86400000));
+    if(avg<5) list.push({type:'critico',icon:'🚨',title:`${u.name} — Nota crítica`,msg:`Média ${avg} abaixo de 5. Intervenção urgente necessária.`});
+    else if(avg<7) list.push({type:'atencao',icon:'⚠️',title:`${u.name} — Requer atenção`,msg:`Média ${avg}, abaixo da meta de 7.`});
+    if(nps<0) list.push({type:'critico',icon:'📉',title:`${u.name} — NPS negativo`,msg:`NPS: ${nps}. Mais detratores que promotores.`});
+    if(days>30) list.push({type:'info',icon:'📅',title:`${u.name} — Sem visita recente`,msg:`Última avaliação há ${days} dias.`});
+  });
+  const el = document.getElementById('dash-alerts');
+  el.innerHTML = list.slice(0,5).map(a=>`
+    <div class="alert-item ${a.type}">
+      <div class="alert-icon">${a.icon}</div>
+      <div class="alert-text"><strong>${a.title}</strong>${a.msg}</div>
+    </div>`).join('');
+}
+
+function buildInsights(visits){
+  if(!visits.length){ document.getElementById('dash-insights').innerHTML=''; return; }
+  const uavgs = UNITS.map(u=>{
+    const uv=visits.filter(v=>v.unitId===u.id);
+    return{name:u.name,avg:uv.length?Math.round((uv.reduce((a,v)=>a+v.score,0)/uv.length)*10)/10:0};
+  }).filter(u=>u.avg>0).sort((a,b)=>b.avg-a.avg);
+  const cavgs = CRITERIA.map(c=>{
+    const sc=visits.flatMap(v=>c.items.map(i=>v.answers[i.id]).filter(v=>v!=null));
+    return{name:c.name,avg:sc.length?Math.round((sc.reduce((a,b)=>a+b,0)/sc.length)*10)/10:0};
+  });
+  const ins=[];
+  if(uavgs.length) ins.push({icon:'🌟',text:`A unidade <strong>${uavgs[0].name}</strong> lidera o ranking com nota <strong>${uavgs[0].avg}</strong> — referência de excelência para a rede.`});
+  if(uavgs.length>1&&uavgs[uavgs.length-1].avg<7) ins.push({icon:'🔧',text:`A unidade <strong>${uavgs[uavgs.length-1].name}</strong> está com nota <strong>${uavgs[uavgs.length-1].avg}</strong>, abaixo da meta. Recomenda-se análise do atendimento.`});
+  const bc=[...cavgs].sort((a,b)=>b.avg-a.avg)[0];
+  const wc=[...cavgs].sort((a,b)=>a.avg-b.avg)[0];
+  if(bc) ins.push({icon:'💆',text:`O critério <strong>${bc.name}</strong> tem a maior média (<strong>${bc.avg}</strong>) — ponto forte consistente da rede.`});
+  if(wc&&wc.avg<7) ins.push({icon:'📌',text:`O critério <strong>${wc.name}</strong> tem a menor média (<strong>${wc.avg}</strong>) — prioridade de melhoria para todas as unidades.`});
+  document.getElementById('dash-insights').innerHTML = ins.slice(0,4).map(i=>`
+    <div class="insight-card"><div class="insight-icon">${i.icon}</div><div class="insight-text">${i.text}</div></div>`).join('');
+}
+
+// ═══════════════════════ EXPERIÊNCIA ═══════════════════════
+function renderExperiencia(){
+  const visits = getVisits();
+  const nps = calcNPS(visits);
+  const p = visits.filter(v=>v.nps>=9).length;
+  const n = visits.filter(v=>v.nps>=7&&v.nps<=8).length;
+  const d = visits.filter(v=>v.nps<=6).length;
+  const total = visits.length||1;
+
+  document.getElementById('exp-kpis').innerHTML = `
+    <div class="kpi-card"><div class="kpi-label">NPS Global</div>
+      <div class="kpi-value" style="color:${nps>=50?'#4CAF50':nps>=0?'#F4B400':'#D9534F'}">${nps}</div>
+      <div class="kpi-sub">Net Promoter Score</div></div>
+    <div class="kpi-card"><div class="kpi-label">Promotores</div>
+      <div class="kpi-value" style="color:#4CAF50">${p}</div>
+      <div class="kpi-sub">${Math.round(p/total*100)}% · Nota 9–10</div></div>
+    <div class="kpi-card"><div class="kpi-label">Neutros</div>
+      <div class="kpi-value" style="color:#F4B400">${n}</div>
+      <div class="kpi-sub">${Math.round(n/total*100)}% · Nota 7–8</div></div>
+    <div class="kpi-card"><div class="kpi-label">Detratores</div>
+      <div class="kpi-value" style="color:#D9534F">${d}</div>
+      <div class="kpi-sub">${Math.round(d/total*100)}% · Nota 0–6</div></div>`;
+
+  const pp=Math.round(p/total*100), np=Math.round(n/total*100), dp=Math.round(d/total*100);
+  document.getElementById('nps-gauge-wrap').innerHTML = `
+    <div class="nps-gauge">
+      <div class="nps-number" style="color:${nps>=50?'#4CAF50':nps>=0?'#F4B400':'#D9534F'}">${nps}</div>
+      <div style="font-size:13px;color:var(--cinza);margin-top:4px">Net Promoter Score</div>
+      <div class="nps-zone" style="margin-top:16px">
+        <div class="nps-zone-d" style="flex:${dp||1}"></div>
+        <div class="nps-zone-n" style="flex:${np||1}"></div>
+        <div class="nps-zone-p" style="flex:${pp||1}"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--cinza);margin-top:6px">
+        <span>Detratores ${dp}%</span><span>Neutros ${np}%</span><span>Promotores ${pp}%</span>
+      </div>
+    </div>`;
+
+  makeChart('chart-nps-dist','doughnut',{
+    labels:['Promotores','Neutros','Detratores'],
+    datasets:[{data:[p,n,d],backgroundColor:['#4CAF50','#F4B400','#D9534F'],borderWidth:0}]
+  },{plugins:{legend:{position:'bottom'}}});
+
+  const cavgs = CRITERIA.map(c=>{
+    const sc=visits.flatMap(v=>c.items.map(i=>v.answers[i.id]).filter(v=>v!=null));
+    return sc.length?Math.round((sc.reduce((a,b)=>a+b,0)/sc.length)*10)/10:0;
+  });
+  makeChart('chart-radar','radar',{
+    labels:CRITERIA.map(c=>c.name),
+    datasets:[{label:'Média',data:cavgs,backgroundColor:'rgba(199,168,106,.15)',borderColor:'#C7A86A',borderWidth:2,pointBackgroundColor:'#C7A86A'}]
+  },{scales:{r:{min:0,max:10,ticks:{stepSize:2}}},plugins:{legend:{display:false}}});
+}
+
+// ═══════════════════════ RANKING ═══════════════════════
+function renderRanking(){
+  const visits = getVisits();
+  const data = UNITS.map(u=>{
+    const uv = visits.filter(v=>v.unitId===u.id);
+    const avg = uv.length?Math.round((uv.reduce((a,v)=>a+v.score,0)/uv.length)*10)/10:0;
+    return{...u,avg,count:uv.length,nps:calcNPS(uv)};
+  }).sort((a,b)=>b.avg-a.avg);
+  const maxAvg = data[0]?.avg||10;
+  const medals = ['🥇','🥈','🥉','4','5'];
+  document.getElementById('ranking-list').innerHTML = data.map((u,i)=>`
+    <div class="rank-item">
+      <div class="rank-pos ${i<3?'p'+(i+1):''}">${i<3?medals[i]:i+1+'º'}</div>
+      <div style="flex:1">
+        <div class="rank-name">${u.name}</div>
+        <div style="font-size:12px;color:var(--cinza);margin-top:2px">${u.count} visitas · NPS ${u.nps}</div>
+      </div>
+      <div class="rank-bar-wrap"><div class="rank-bar" style="width:${maxAvg?u.avg/maxAvg*100:0}%"></div></div>
+      <div class="rank-score">${u.avg}</div>
+      <span class="status status-${getStatus(u.avg)}">${statusLabel(getStatus(u.avg))}</span>
+    </div>`).join('');
+}
+
+// ═══════════════════════ NOVA AVALIAÇÃO ═══════════════════════
+function renderNovaForm(){
+  uploadedFiles = [];
+  window._answers = {};
+  window._nps = null;
+  const unitOpts = UNITS.map(u=>`<option value="${u.id}">${u.name}</option>`).join('');
+  const today = new Date().toISOString().split('T')[0];
+  let html = '<div class="form-card"><div class="form-card-title">Informações da Visita</div>';
+
+  if(currentUser.role==='cliente_oculto'){
+    html += `<div class="lgpd-box"><strong>Termo de Consentimento (LGPD)</strong><br>
+      Seus dados serão utilizados exclusivamente para avaliação interna de qualidade do Studio Lu Rech.
+      Não serão compartilhados com terceiros.
+      <div class="lgpd-check"><input type="checkbox" id="lgpd-check">
+      <label for="lgpd-check">Li e concordo com o tratamento dos meus dados para esta finalidade.</label></div></div>`;
+  }
+
+  html += `<div class="form-row">
+    <div class="form-field"><label>Unidade</label><select id="nf-unit">${unitOpts}</select></div>
+    <div class="form-field"><label>Data da Visita</label><input type="date" id="nf-date" value="${today}"></div>
+  </div>
+  <div class="form-row">
+    <div class="form-field"><label>Nome do Avaliador</label>
+      <input type="text" id="nf-evaluator" value="${currentUser.name}" ${currentUser.role==='cliente_oculto'?'readonly style="background:#f5f2ee"':''}></div>
+    <div class="form-field"><label>Serviço Realizado</label>
+      <input type="text" id="nf-service" placeholder="Ex: Corte + Escova"></div>
+  </div></div>`;
+
+  CRITERIA.forEach(c=>{
+    html += `<div class="form-card">
+      <div class="form-card-title">${c.name} <span class="badge-weight">Peso ${c.weight}</span></div>`;
+    c.items.forEach(it=>{
+      html += `<div class="criteria-item">
+        <div class="criteria-name">${it.name}</div>
+        <div class="scale-buttons" id="sb-${it.id}">
+          ${[0,1,2,3,4,5,6,7,8,9,10].map(n=>`<button class="scale-btn" onclick="selectScale('${it.id}',${n},this)">${n}</button>`).join('')}
+        </div>
+        <div class="scale-labels"><span>Péssimo</span><span>Excelente</span></div>
+      </div>`;
+    });
+    html += '</div>';
+  });
+
+  html += `<div class="form-card">
+    <div class="form-card-title">NPS — Net Promoter Score</div>
+    <div class="nps-section">
+      <div class="nps-label">Em uma escala de 0 a 10, qual a probabilidade de recomendar este salão?</div>
+      <div class="nps-sub">0 = Definitivamente não recomendaria &nbsp;·&nbsp; 10 = Recomendaria com certeza</div>
+      <div class="nps-buttons" id="nps-buttons">
+        ${[0,1,2,3,4,5,6,7,8,9,10].map(n=>`<button class="nps-btn ${npsClass(n)}" onclick="selectNPS(${n},this)">${n}</button>`).join('')}
+      </div>
+    </div>
+  </div>`;
+
+  html += `<div class="form-card">
+    <div class="form-card-title">Observações e Evidências</div>
+    <div class="form-field"><label>Comentários gerais</label>
+      <textarea id="nf-obs" placeholder="Descreva sua experiência..."></textarea></div>
+    <div class="form-field">
+      <label>Fotos / Vídeos (máx. 10)</label>
+      <div class="upload-zone" onclick="document.getElementById('nf-files').click()">
+        <div style="font-size:32px">📷</div>
+        <strong>Clique para adicionar arquivos</strong>
+        <p>Fotos e vídeos · Máximo 10 arquivos</p>
+        <input type="file" id="nf-files" multiple accept="image/*,video/*" style="display:none" onchange="handleFileUpload(event)">
+      </div>
+      <div class="upload-previews" id="upload-previews"></div>
+    </div>
+  </div>`;
+
+  html += `<div class="submit-bar">
+    <div class="score-preview">Nota calculada: <strong id="score-live">—</strong></div>
+    <div style="display:flex;gap:10px">
+      <button class="btn-secondary" onclick="navigateTo('${currentUser.role==='cliente_oculto'?'minhas':'dashboard'}')">Cancelar</button>
+      <button class="btn-gold" onclick="submitForm()">Salvar Avaliação</button>
+    </div>
+  </div>`;
+
+  document.getElementById('nova-form-wrap').innerHTML = html;
+}
+
+function selectScale(itemId,val,btn){
+  window._answers[itemId] = val;
+  document.getElementById('sb-'+itemId).querySelectorAll('.scale-btn').forEach(b=>b.classList.remove('selected'));
+  btn.classList.add('selected');
+  const s = calcWeightedScore(window._answers);
+  const el = document.getElementById('score-live');
+  if(el) el.textContent = Object.keys(window._answers).length>0 ? s : '—';
+}
+
+function selectNPS(val,btn){
+  window._nps = val;
+  document.querySelectorAll('.nps-btn').forEach(b=>b.classList.remove('selected'));
+  btn.classList.add('selected');
+}
+
+function handleFileUpload(e){
+  const files = Array.from(e.target.files).slice(0,10-uploadedFiles.length);
+  uploadedFiles.push(...files);
+  const wrap = document.getElementById('upload-previews');
+  if(wrap) wrap.innerHTML = uploadedFiles.map((f,i)=>`
+    <div class="upload-file">
+      <span>${f.name.length>24?f.name.slice(0,24)+'…':f.name}</span>
+      <span class="file-remove" onclick="removeFile(${i})">×</span>
+    </div>`).join('');
+}
+
+function removeFile(idx){
+  uploadedFiles.splice(idx,1);
+  handleFileUpload({target:{files:[]}});
+  document.getElementById('upload-previews').innerHTML = uploadedFiles.map((f,i)=>`
+    <div class="upload-file">
+      <span>${f.name.length>24?f.name.slice(0,24)+'…':f.name}</span>
+      <span class="file-remove" onclick="removeFile(${i})">×</span>
+    </div>`).join('');
+}
+
+function submitForm(){
+  if(currentUser.role==='cliente_oculto'){
+    const lgpd = document.getElementById('lgpd-check');
+    if(lgpd&&!lgpd.checked){ alert('Por favor, aceite os termos de uso para continuar.'); return; }
+  }
+  const unitId = document.getElementById('nf-unit')?.value;
+  const date = document.getElementById('nf-date')?.value;
+  const evaluator = document.getElementById('nf-evaluator')?.value||currentUser.name;
+  const obs = document.getElementById('nf-obs')?.value||'';
+  if(!unitId||!date){ alert('Preencha a unidade e a data.'); return; }
+  if(window._nps===null){ alert('Informe o NPS (0–10).'); return; }
+  const total = CRITERIA.reduce((a,c)=>a+c.items.length,0);
+  const answered = Object.keys(window._answers).length;
+  if(answered<total){ alert(`Responda todos os critérios. (${answered}/${total})`); return; }
+  const visits = getVisits();
+  visits.push({
+    id:Date.now(),unitId,date,evaluator,evaluatorId:currentUser.id,
+    answers:{...window._answers},nps:window._nps,
+    score:calcWeightedScore(window._answers),obs,
+    quarter:getQuarter(date),files:uploadedFiles.map(f=>f.name),
+  });
+  saveVisits(visits);
+  alert('Avaliação salva com sucesso!');
+  navigateTo(currentUser.role==='cliente_oculto'?'minhas':'dashboard');
+}
+
+// ═══════════════════════ MINHAS VISITAS ═══════════════════════
+function renderMinhasVisitas(){
+  const visits = getVisits().filter(v=>v.evaluatorId===currentUser.id);
+  const wrap = document.getElementById('co-portal-wrap');
+  if(!visits.length){
+    wrap.innerHTML=`<div class="co-welcome"><h2>Bem-vinda, ${currentUser.name}!</h2>
+      <p>Você ainda não realizou nenhuma avaliação. Clique em "Nova Avaliação" para começar.</p></div>`;
+    return;
+  }
+  wrap.innerHTML=`
+    <div class="co-welcome"><h2>Suas Visitas</h2><p>${visits.length} avaliação(ões) registrada(s)</p></div>
+    <div class="co-visits">
+      ${[...visits].sort((a,b)=>b.date.localeCompare(a.date)).map(v=>`
+        <div class="co-visit-card" style="cursor:pointer" onclick="openVisitModal(${v.id})">
+          <div>
+            <strong>${unitName(v.unitId)}</strong>
+            <div style="font-size:12px;color:var(--cinza);margin-top:3px">${formatDate(v.date)} · ${v.quarter}</div>
+          </div>
+          <div style="text-align:center">
+            <div style="font-size:22px;font-weight:700;color:var(--gold)">${v.score}</div>
+            <div style="font-size:11px;color:var(--cinza)">nota final</div>
+          </div>
+          <span class="kpi-badge badge-${npsClass(v.nps)}">NPS ${v.nps}</span>
+          <span class="status status-${getStatus(v.score)}">${statusLabel(getStatus(v.score))}</span>
+        </div>`).join('')}
+    </div>`;
+}
+
+// ═══════════════════════ TRIMESTRAL ═══════════════════════
+function renderTrimestral(){
+  const visits = getVisits();
+  const quarters = [
+    {id:'Q1',name:'Q1',period:'Jan – Mar',start:1},
+    {id:'Q2',name:'Q2',period:'Abr – Jun',start:4},
+    {id:'Q3',name:'Q3',period:'Jul – Set',start:7},
+    {id:'Q4',name:'Q4',period:'Out – Dez',start:10},
+  ];
+  const now = new Date();
+  document.getElementById('quarterly-grid').innerHTML = quarters.map(q=>{
+    const qv = visits.filter(v=>v.quarter===q.id);
+    const past = new Date(2026,q.start-1,1)<now;
+    const status = qv.length>0?'Concluído':past?'Pendente':'Agendado';
+    const sc = status==='Concluído'?'excelente':status==='Pendente'?'critico':'bom';
+    return`<div class="quarter-card">
+      <div class="quarter-name">${q.name}</div>
+      <div style="font-size:12px;color:var(--cinza);margin-bottom:8px">${q.period}</div>
+      <div class="quarter-count">${qv.length}</div>
+      <div style="font-size:12px;color:var(--cinza);margin-bottom:8px">visita(s)</div>
+      <span class="status status-${sc}">${status}</span>
+    </div>`;
+  }).join('');
+
+  const rows = [];
+  quarters.forEach(q=>{ UNITS.forEach(u=>{
+    const uqv = visits.filter(v=>v.quarter===q.id&&v.unitId===u.id);
+    const avg = uqv.length?Math.round((uqv.reduce((a,v)=>a+v.score,0)/uqv.length)*10)/10:null;
+    rows.push({qn:q.name,period:q.period,unit:u.name,count:uqv.length,avg});
+  }); });
+  document.getElementById('quarterly-table').innerHTML = rows.map(r=>`
+    <tr>
+      <td>${r.qn}</td><td>${r.period}</td><td>${r.unit}</td>
+      <td>${r.count>0?`<span class="status status-excelente">Realizada (${r.count})</span>`:`<span class="status status-atencao">Pendente</span>`}</td>
+      <td>${r.avg!==null?`<strong>${r.avg}</strong>`:'—'}</td>
+    </tr>`).join('');
+}
+
+// ═══════════════════════ RELATÓRIOS ═══════════════════════
+function renderRelatorios(){
+  const sel = document.getElementById('rel-unit');
+  if(sel && sel.options.length===1){
+    UNITS.forEach(u=>{ const o=document.createElement('option');o.value=u.id;o.textContent=u.name;sel.appendChild(o); });
+  }
+  let visits = getVisits();
+  const uv = document.getElementById('rel-unit')?.value;
+  const pv = document.getElementById('rel-period')?.value;
+  if(uv) visits = visits.filter(v=>v.unitId===uv);
+  if(pv) visits = visits.filter(v=>v.quarter===pv);
+  const sorted = [...visits].sort((a,b)=>b.date.localeCompare(a.date));
+  document.getElementById('rel-table').innerHTML = sorted.length ?
+    sorted.map(v=>{
+      const ca = CRITERIA.map(c=>criterionAvg(v.answers,c));
+      return`<tr style="cursor:pointer" onclick="openVisitModal(${v.id})">
+        <td>${formatDate(v.date)}</td>
+        <td>${unitName(v.unitId)}</td>
+        <td>${v.evaluator}</td>
+        ${ca.map(a=>`<td>${a!==null?a:'—'}</td>`).join('')}
+        <td><strong>${v.score}</strong></td>
+        <td><span class="kpi-badge badge-${npsClass(v.nps)}">${v.nps}</span></td>
+      </tr>`;}).join('')
+    :'<tr><td colspan="10" style="text-align:center;padding:40px;color:var(--cinza)">Nenhuma visita encontrada.</td></tr>';
+}
+
+// ═══════════════════════ CONFIG ═══════════════════════
+function renderConfig(){
+  document.getElementById('cfg-criteria-table').innerHTML = CRITERIA.map(c=>`
+    <tr style="border-bottom:1px solid #f0ede8">
+      <td style="padding:10px 0;font-size:13px">${c.name}</td>
+      <td style="padding:10px 0;font-size:13px;text-align:right;font-weight:600;color:var(--gold)">${c.weight}</td>
+    </tr>`).join('');
+  document.getElementById('cfg-users-table').innerHTML = USERS.map(u=>`
+    <tr>
+      <td style="padding:10px 12px;font-size:13px;border-bottom:1px solid #f0ede8">${u.name}</td>
+      <td style="padding:10px 12px;font-size:13px;border-bottom:1px solid #f0ede8;color:var(--cinza)">${u.email}</td>
+      <td style="padding:10px 12px;font-size:13px;border-bottom:1px solid #f0ede8"><span class="tag">${ROLE_LABELS[u.role]}</span></td>
+    </tr>`).join('');
+}
+
+function syncWeights(changed){
+  const i=document.getElementById('cfg-internal');
+  const o=document.getElementById('cfg-oculto');
+  if(changed==='internal') o.value=100-parseInt(i.value);
+  else i.value=100-parseInt(o.value);
+  document.getElementById('cfg-internal-val').textContent=i.value+'%';
+  document.getElementById('cfg-oculto-val').textContent=o.value+'%';
+}
+
+function saveConfig(){
+  appConfig.internalWeight=parseInt(document.getElementById('cfg-internal').value);
+  appConfig.ocultoWeight=parseInt(document.getElementById('cfg-oculto').value);
+  alert('Configuração salva!');
+}
+
+// ═══════════════════════ MODAL ═══════════════════════
+function openVisitModal(visitId){
+  const v = getVisits().find(x=>x.id===visitId);
+  if(!v) return;
+  document.getElementById('modal-visit-title').textContent = `${unitName(v.unitId)} · ${formatDate(v.date)}`;
+  let html = `<p style="font-size:12px;color:var(--cinza);margin-bottom:16px">Avaliador: ${v.evaluator} · ${v.quarter}</p>
+    <div style="display:flex;gap:16px;margin-bottom:20px;flex-wrap:wrap;text-align:center">
+      <div style="flex:1"><div style="font-size:36px;font-weight:800;color:var(--gold)">${v.score}</div><div style="font-size:11px;color:var(--cinza)">Nota Final</div></div>
+      <div style="flex:1"><div style="font-size:36px;font-weight:800;color:${v.nps>=9?'#4CAF50':v.nps>=7?'#F4B400':'#D9534F'}">${v.nps}</div><div style="font-size:11px;color:var(--cinza)">NPS · ${npsLabel(npsClass(v.nps))}</div></div>
+      <div style="flex:1;display:flex;align-items:center;justify-content:center"><span class="status status-${getStatus(v.score)}">${statusLabel(getStatus(v.score))}</span></div>
+    </div>`;
+  CRITERIA.forEach(c=>{
+    html += `<div style="margin-bottom:14px">
+      <strong style="font-size:13px">${c.name}</strong>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px">
+        ${c.items.map(it=>{
+          const val=v.answers[it.id];
+          return`<div style="font-size:12px;background:#f5f2ee;border-radius:6px;padding:4px 10px">${it.name}: <strong>${val!=null?val:'—'}</strong></div>`;
+        }).join('')}
+      </div></div>`;
+  });
+  if(v.obs) html+=`<div style="margin-top:12px;padding:12px;background:#f5f2ee;border-radius:8px;font-size:13px;color:var(--cinza)">${v.obs}</div>`;
+  if(v.files&&v.files.length) html+=`<div style="margin-top:10px;font-size:12px;color:var(--cinza)">Arquivos: ${v.files.join(', ')}</div>`;
+  document.getElementById('modal-visit-body').innerHTML = html;
+  document.getElementById('modal-visit').classList.add('open');
+}
+
+function closeModal(){ document.getElementById('modal-visit').classList.remove('open'); }
+document.getElementById('modal-visit').addEventListener('click',function(e){ if(e.target===this) closeModal(); });
+
+// ═══════════════════════ HELPERS ═══════════════════════
+function unitName(id){ return UNITS.find(u=>u.id===id)?.name||id; }
+function formatDate(d){
+  if(!d) return '—';
+  const [y,m,day]=d.split('-');
+  return `${day}/${m}/${y}`;
+}
+</script>
+</body>
+</html>
